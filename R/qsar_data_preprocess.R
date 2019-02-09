@@ -18,11 +18,12 @@ library(dplyr)
 library(neuralnet)
 library(data.table)
 library(qcc)
-library("factoextra")
-library("FactoMineR")
+library(factoextra)
+library(FactoMineR)
 library(pcaMethods)
 library(xtable)
-
+library(e1071)
+library(RSNNS)
 
 sdf187 <- read.SDFset("QSAR_187.sdf")    # This is the 187 compounds chosen from literature
 
@@ -72,6 +73,6 @@ colnames(ytestB)<-"PIC50"
 trainingdata <- cbind(xtrain,ytrainB)
 testdata <- cbind(xtest,ytestB)
 
-
-
+trainingdata[,1:15] <- scale(trainingdata[,1:15])
+testdata[,1:15] <- scale(testdata[,1:15])
 

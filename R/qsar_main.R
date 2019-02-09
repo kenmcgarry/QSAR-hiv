@@ -8,7 +8,7 @@ setwd("C:/common_laptop/R-files/QSAR")  # point to where Rcode and data are loca
 #    them into train/test sets
 source("qsar_data_preprocess.R")  
 
-# 2. load in functions
+# 2. load in functions for RMSE calcs
 source("qsar_functions.R")
 
 # 3. train NN, SVM, RF and RBF on 187 compound data

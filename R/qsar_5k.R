@@ -4,18 +4,21 @@
 # Get the 5,000 compound file into good shape for analysis
 
 setwd("C:/common_laptop/R-files/QSAR")  # point to where file is located
-load("C:/common_laptop/R-files/QSAR/neuralnet187.RData")   # load up trained neural network
-sdf5k <- read.SDFset("5000compounds.sdf")   # load in the old 5K compounds
-sdf5k <- read.SDFset("2nd-5000compounds.sdf") # load in the new 5K compounds
+#load("C:/common_laptop/R-files/QSAR/neuralnet187.RData")   # load up trained neural network
+sdf5k1 <- read.SDFset("5000compounds.sdf")   # load in the old 5K compounds
+sdf5k2 <- read.SDFset("2nd-5000compounds.sdf") # load in the new 5K compounds
 
-valid <- validSDF(sdf5k); 
-sdf5k <- sdf5k[valid] # remove invalid data if we have any.
-length(sdf5k)
+valid <- validSDF(sdf5k1); 
+sdf5k1 <- sdf5k1[valid] # remove invalid data if we have any.
+cat("\n ",length(sdf5k1)," valid compounds in 1st batch")
 
+valid <- validSDF(sdf5k2); 
+sdf5k2 <- sdf5k2[valid] # remove invalid data if we have any.
+cat("\n ",length(sdf5k2)," valid compounds in 2nd batch")
 
 
 # get the data out of SDF into matrix form for datamining
-blockmatrix5 <- datablock2ma(datablocklist=datablock(sdf5k)) # Converts data block to matrix 
+blockmatrix5 <- datablock2ma(datablocklist=datablock(sdf5k1)) # Converts data block to matrix 
 numchar <- splitNumChar(blockmatrix=blockmatrix5) # Splits to numeric and character matrix 
 data5 <- numchar[1]
 data5 <-as.data.frame(data5)
