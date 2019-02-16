@@ -62,8 +62,10 @@ testB  <- X1[-index,]
 ytrainB <- trainB[,1] # 1st column is the Activity value i.e. the training label
 ytestB <- testB[,1] # 1st column 
 
-xtrain<- as.data.frame((xtrain[,1:15]))
-xtest<- as.data.frame((xtest[,1:15]))
+numberPC <- 20
+
+xtrain<- as.data.frame((xtrain[,1:numberPC]))
+xtest<- as.data.frame((xtest[,1:numberPC]))
 
 ytrainB <- as.data.frame(ytrainB)
 ytestB <- as.data.frame(ytestB)
@@ -73,6 +75,7 @@ colnames(ytestB)<-"PIC50"
 trainingdata <- cbind(xtrain,ytrainB)
 testdata <- cbind(xtest,ytestB)
 
-trainingdata[,1:15] <- scale(trainingdata[,1:15])
-testdata[,1:15] <- scale(testdata[,1:15])
+# https://stackoverflow.com/questions/15215457/standardize-data-columns-in-r
+#trainingdata[,1:15] <- scale(trainingdata[,1:15])
+#testdata[,1:15] <- scale(testdata[,1:15])
 

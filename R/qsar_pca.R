@@ -23,7 +23,7 @@ res.pca <- PCA(X[,2:ncol(X)], graph = FALSE)
 print (res.pca) 
 eigenvalues <- res.pca$eig # get eigenvalues
 head(eigenvalues[, 1:2])
-fviz_screeplot (res.pca, ncp=10) # % variance explained by each PC
+fviz_screeplot (res.pca, ncp=numberPC) # % variance explained by each PC
 individual_contributions <- fviz_pca_var(res.pca) # Variables factor map
 # Contribution of variables on PC1 and PC2
 individual_contributions <- fviz_contrib(res.pca, choice = "var", axes = 1:2)  # set axes=1 to consider only PC1
@@ -78,16 +78,16 @@ fviz_pca_var(res.pca, select.var= list(cos2 = 5))
 name <- list(name = c("SlogP", "logP.o.w.", "lip_acc","logS"))
 fviz_pca_var(res.pca, select.var = name)
 # top x contributing individuals and variables
-fviz_pca_biplot(res.pca, select.ind = list(contrib = 20), 
-                select.var = list(contrib = 20),
+fviz_pca_biplot(res.pca, select.ind = list(contrib = numberPC), 
+                select.var = list(contrib = numberPC),
                 ggtheme = theme_minimal())
 
 # SCREE PLOT
 # http://www.sthda.com/english/wiki/print.php?id=202
-fviz_screeplot(res.pca, ncp=15,main="")
+fviz_screeplot(res.pca, ncp=numberPC,main="")
 eigenvalues <- res.pca$eig
-head(eigenvalues[, 1:2],15)
-sum(eigenvalues[1:15,2])
+head(eigenvalues[, 1:2],numberPC)
+sum(eigenvalues[1:numberPC,2])
 
 ####
 #source("https://bioconductor.org/biocLite.R")
