@@ -26,6 +26,7 @@ dim(data5)
 data5 <- na.omit(data5)  # get rid of NA if any
 X <- as.matrix(data5)
 
+
 # ------------- REMOVE UNINFORMATIVE VARIABLES i.e. ANY VARIABLE WITH 90% OR MORE ZEROS OR ONES --------
 # ------------- if we dont it causes PCA to crash -------------
 limit <- nrow(X)*.90
@@ -41,12 +42,17 @@ n <- nrow(X1)
 
 X1 <- X1[,1:numberPC]
 
+# REMOVE superfluous data
+rm(data1,data5,blockmatrix1,blockmatrix5,sdf187,sdf5k1,sdf5k2,X)
+
+
 ########## try models on the compounds
 nn_pred <- compute(nn_model,X1)
 rf_pred <- predict(rf_model,X1)
 svm_pred <-predict(svm_model,X1)
 rbf_pred <- predict(rbf_model,X1)
-pls_pred <- predict(pls_model,X1)
+pls_pred <- predict(pls_model,(X1[,1:numberPC]))
+lm_pred <- predict(lm_model, as.data.frame(X1[,1:numberPC]))
 
 nn_temp <- data.frame(Compounds=rownames(nn_pred$net.result),PIC50=nn_pred$net.result)
 nn_temp <- nn_temp %>% 
@@ -69,8 +75,53 @@ rbf_temp <- rbf_temp %>%
 head(rbf_temp,10)
 
 pls_temp <- data.frame(Compounds=rownames(pls_pred),PIC50=pls_pred)
-rbf_temp <- pls_temp %>% 
+pls_temp <- pls_temp %>% 
   dplyr::arrange(desc(PIC50))
 head(pls_temp,10)
+
+lm_temp <- data.frame(Compounds=names(lm_pred),PIC50=lm_pred)
+lm_temp <- lm_temp %>% 
+  dplyr::arrange(desc(PIC50))
+head(lm_temp,10)
+
+## COMPOUNDS in common between models
+# VENN: ensure models output in common format to allow comparisions with Venn diagram however
+# a large amount of processing is required for the mlp, since neuralnet package is very different.
+library(VennDiagram)
+library(gplots)
+topcomp <- 10
+
+candidates_rf <-  head(rf_temp$Compounds,topcomp)
+candidates_svm <- head(svm_temp$Compounds,topcomp)
+candidates_rbf <- head(rbf_temp$Compounds,topcomp)
+candidates_nn <- head(nn_temp$Compounds,topcomp)
+
+# make a nice well structured data frame, for some reason svm and rbf only produce 1264 candidates from 1280 test data  
+comp_model <- data.frame(rf =as.vector(candidates_rf),
+                         svm=as.vector(candidates_svm), 
+                         rbf=as.vector(candidates_rbf),
+                         mlp=as.vector(candidates_nn))
+
+comp_model[] <- lapply(comp_model, as.character)
+
+commoncomps <- Reduce(intersect, list(candidates_nn,
+                                         candidates_rf,
+                                         candidates_rbf,
+                                         candidates_svm))  # compounds identified by all four classifiers
+
+
+######################################################################
+plot.new()
+venn.plot <- venn.diagram(list(comp_model$rf,comp_model$svm,comp_model$rbf,comp_model$mlp), 
+                          NULL, 
+                          fill=c("red", "blue","green","yellow"), 
+                          alpha=c(0.5,0.5,0.5,0.5), 
+                          cex = 2, 
+                          cat.fontface=2, 
+                          margins =c(10,10),
+                          cat.cex=2,
+                          category.names=c("RF", "SVM","RBF","MLP"))
+grid.draw(venn.plot)
+
 
 

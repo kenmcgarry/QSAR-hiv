@@ -89,10 +89,6 @@ eigenvalues <- res.pca$eig
 head(eigenvalues[, 1:2],numberPC)
 sum(eigenvalues[1:numberPC,2])
 
-####
-#source("https://bioconductor.org/biocLite.R")
-#biocLite("pcaMethods")
-
 
 
 
