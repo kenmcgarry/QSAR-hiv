@@ -91,6 +91,3 @@ sum(eigenvalues[1:numberPC,2])
 
 
 
-
-
-

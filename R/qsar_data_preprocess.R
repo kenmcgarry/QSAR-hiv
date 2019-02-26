@@ -62,7 +62,7 @@ testB  <- X1[-index,]
 ytrainB <- trainB[,1] # 1st column is the Activity value i.e. the training label
 ytestB <- testB[,1] # 1st column 
 
-numberPC <- 20
+numberPC <- 15
 
 xtrain<- as.data.frame((xtrain[,1:numberPC]))
 xtest<- as.data.frame((xtest[,1:numberPC]))

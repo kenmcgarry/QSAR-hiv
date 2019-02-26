@@ -3,6 +3,8 @@
 # Feb 2019 - updated.
 
 setwd("C:/common_laptop/R-files/QSAR")  # point to where Rcode and data are located
+numberPC <- 15
+cat("\nnumber of PCs set to ",numberPC)
 
 # 1. load in the data (187 compounds for train/test), performs PCA, divides 
 #    them into train/test sets

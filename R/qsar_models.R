@@ -6,7 +6,7 @@ cat("\nTraining NN model")
 n <- colnames(trainingdata)
 form <- as.formula(paste("PIC50 ~", paste(n[!n %in% "PIC50"], collapse = " + ")))
 nn_model <- neuralnet(form,data=trainingdata, 
-                      hidden=c(25,25), 
+                      hidden=c(20,20), 
                       linear.output=TRUE,
                       threshold=0.001,
                       stepmax = 1e+06,
@@ -95,7 +95,7 @@ rm(xy)
 xy<-cbind(ytestB,lm_pred)
 boot::corr(d=xy ^ 2)
 rmse(as.vector(unlist(ytestB))-as.vector(unlist(lm_pred)))
-plot(xy,col='red',main='Actual vs predicted Linear Regression, (PCA=15 comps) R2=,RMSE=0.01',pch=18,cex=0.7)
+plot(xy,col='red',main='Actual vs predicted Linear Regression, (PCA=20 comps) R2=,RMSE=0.01',pch=18,cex=0.7)
 abline(0,1,lwd=2)
 legend('bottomright',legend='Linear',pch=18,col='red', bty='n')
 
