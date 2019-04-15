@@ -1,5 +1,5 @@
 # qsar_main.R
-# building regression models using quantitative structure-activity relationships (QSAR) data
+# building MLP regression models using quantitative structure-activity relationships (QSAR) data
 # Feb 2019 - updated.
 
 setwd("C:/common_laptop/R-files/QSAR")  # point to where Rcode and data are located
