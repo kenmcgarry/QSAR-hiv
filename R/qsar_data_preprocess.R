@@ -2,6 +2,7 @@
 # Preprocess Marks and Amers SDF files, chemical compound data
 # Sept-Nov 2016
 # Feb 2019 - updated.
+# June 2019 - bug fixed
 
 library(ChemmineR)
 library(fmcsR)
@@ -59,23 +60,19 @@ xtrain <- train[,1:ncol(X1)]; # do not use 1st X value, (the Activity) in the tr
 
 trainB <- X1[index,]
 testB  <- X1[-index,]
-ytrainB <- trainB[,1] # 1st column is the Activity value i.e. the training label
-ytestB <- testB[,1] # 1st column 
-
-numberPC <- 15
+#ytrainB <- trainB[,1] # 1st column is the Activity value (PIC50) i.e. the training label
+#ytestB <- testB[,1] # 1st column 
+ytrainB <- X[index,1] # 1st column is the Activity value (PIC50)i.e. the training label
+ytestB <-  X[-index,1] # 1st column 
 
 xtrain<- as.data.frame((xtrain[,1:numberPC]))
 xtest<- as.data.frame((xtest[,1:numberPC]))
 
 ytrainB <- as.data.frame(ytrainB)
 ytestB <- as.data.frame(ytestB)
-colnames(ytrainB)<-"PIC50"
-colnames(ytestB)<-"PIC50"
+colnames(ytrainB)<- "PIC50"
+colnames(ytestB) <- "PIC50"
 
 trainingdata <- cbind(xtrain,ytrainB)
 testdata <- cbind(xtest,ytestB)
-
-# https://stackoverflow.com/questions/15215457/standardize-data-columns-in-r
-#trainingdata[,1:15] <- scale(trainingdata[,1:15])
-#testdata[,1:15] <- scale(testdata[,1:15])
 

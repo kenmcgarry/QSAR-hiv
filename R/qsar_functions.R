@@ -75,3 +75,18 @@ rmse <- function(error) {
 
 
 
+#
+# As suggested by the reviewers some further measures used in QSAR maybe more appropriate
+# to judge validity of the model as R2, RSME does not always provide a good estimate.
+
+# Roy measure: 
+roy <- function(y, ypred){
+  cat("\nRoy ", sqrt(mean(error^2))) # Roy
+  
+}
+
+# Tropsha measure:
+tropsha <- function(y, ypred){
+  cat("\nTropsha ", sqrt(mean(error^2))) # Tropsha-Golbraikh
+}
+
