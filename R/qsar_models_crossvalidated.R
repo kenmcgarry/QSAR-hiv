@@ -12,6 +12,8 @@ library(e1071)
 library(randomForest)
 library(plotmo)
 library(kernlab)
+library(xlsx)
+library(dplyr)
 
 
 n <- colnames(trainingdata)
@@ -22,10 +24,10 @@ fitControl <- trainControl( # k-fold CV.
   verboseIter = TRUE,
   number = 5)
 
-tunGrid <- expand.grid(data.frame(layer1 = 20, # optimum parameter range, takes 48 hours on my laptop
+tunGrid <- expand.grid(data.frame(layer1 = 20, # optimum parameter range
                                   layer2 = 22,layer3=0)) 
 
-tunGrid <- expand.grid(data.frame(layer1 = 18:22, layer2 = 18:22, layer3 = 0)) # no model improvement
+tunGrid <- expand.grid(data.frame(layer1 = 18:25, layer2 = 18:25, layer3 = 0)) # takes 2 hours
 
 # CV trained neural network
 nn_cv <- caret::train(form, data = trainingdata,
@@ -44,12 +46,18 @@ nn_cv
 nn_pred <- neuralnet::compute(nn_cv$finalModel,testdata[,1:numberPC])
 results <- cbind(nn_pred$net.result,ytestB,ytestB-nn_pred$net.result)
 colnames(results)<-c("neuralnet","PIC50","Residual")
-head(results)
+head(results,20)
 
 # calculate R2, rmse and mae
-xy<-cbind(ytestB,nn_pred$net.result)
+rm(xy)
+xy<-cbind(nn_pred$net.result,ytestB,nn_pred$net.result-ytestB)
 cat("\n RSQUARE",boot::corr(d=xy) ^ 2)
 rmse(as.vector(unlist(ytestB))-as.vector(unlist(nn_pred$net.result)))
+
+# Roy and Trophsa measures
+colnames(xy) <- c("PIC50","Pred","Residual")
+tropsha(xy)
+roy(xy)
 
 plot(xy,col='red',main='Actual vs predicted NN',pch=18,cex=0.7)
 abline(0,1,lwd=2)
@@ -57,6 +65,8 @@ legend('bottomright',legend='NN',pch=18,col='red', bty='n')
 
 # do the residual plot using plotres()
 plotres(nn_cv,which=1:4)
+
+write.xlsx(head(results,20), "mydata.xlsx") 
 
 #########################################################################################
 # -------------- RANDOM FOREST (RF) MODEL ---------------------
@@ -73,18 +83,24 @@ plot(rf_cv)
 rf_pred <- predict(rf_cv, testdata[,1:numberPC])
 results <- cbind(rf_pred,ytestB,ytestB-rf_pred)
 colnames(results)<-c("RandomForest","PIC50","Residual")
-head(results)
+head(results,20)
 rm(xy)
 
 xy<-cbind(ytestB,rf_pred)
-boot::corr(d=xy) ^ 2
-
+cat("\n RSQUARE",boot::corr(d=xy) ^ 2)
 rmse(as.vector(unlist(ytestB))-as.vector(unlist(rf_pred)))
+
+# Roy and Trophsa measures
+colnames(xy) <- c("PIC50","Pred")
+tropsha(xy)
+roy(xy)
+
 plot(xy,col='red',main='Actual vs predicted Random Forest, (PCA=15 comps)',pch=18,cex=0.7)
 abline(0,1,lwd=2)
 legend('bottomright',legend='RF',pch=18,col='red', bty='n')
 plotres(rf_cv)
 
+write.xlsx(head(results,20), "c:mydata.xlsx") 
 
 #########################################################################################
 # -------------- SUPPORT VECTOR MACHINE (SVM) MODEL ---------------------
@@ -102,11 +118,17 @@ svm_cv <- caret::train(form, data = trainingdata, method = "svmRadial",#"svmLine
 svm_cv
 #Predict using SVM regression
 svm_pred <- predict(svm_cv, testdata[,1:numberPC])
-#rm(xy)
-xy<-cbind(ytestB,svm_pred)
-head(xy)
-boot::corr(d=xy) ^ 2
+rm(xy)
+results<-cbind(ytestB,svm_pred)
+head(results,20)
+boot::corr(d=results)^2
 rmse(as.vector(unlist(ytestB))-as.vector(unlist(svm_pred)))
+
+# Roy and Trophsa measures
+xy<-cbind(ytestB,svm_pred)
+colnames(xy) <- c("PIC50","Pred")
+tropsha(xy)
+
 plot(xy,col='red',main='Actual vs predicted SVM, (PCA=15 comps)',pch=18,cex=0.7)
 abline(0,1,lwd=2)
 legend('bottomright',legend='SVM',pch=18,col='red', bty='n')
@@ -115,6 +137,8 @@ plotres(svm_cv)
 results <- cbind(svm_pred,ytestB,ytestB-svm_pred)
 colnames(results)<-c("SVM","PIC50","Residual")
 head(results)
+
+write.xlsx(head(results,20), "mydata.xlsx") 
 
 #########################################################################################
 # -------------- RADIAL BASIS FUNCTION (RBF) MODEL ---------------------
@@ -126,8 +150,12 @@ rbf_model <- rbf(trainingdata[,1:numberPC], trainingdata[,numberPC+1], size=80, 
 rbf_pred <- predict(rbf_model,testdata[,1:numberPC])
 rm(xy)
 xy <- cbind(ytestB,rbf_pred)
-boot::corr(d=xy ^ 2)
+boot::corr(d=xy) ^ 2
 rmse(as.vector(unlist(ytestB))-as.vector(unlist(rbf_pred)))
+# Roy and Trophsa measures
+colnames(xy) <- c("PIC50","Pred")
+tropsha(xy)
+
 plot(xy,col='red',main='Actual vs predicted RBF, (PCA=15 comps)',pch=18,cex=0.7)
 abline(0,1,lwd=2)
 legend('bottomright',legend='RBF',pch=18,col='red', bty='n')
@@ -152,6 +180,11 @@ rm(xy)
 xy <- cbind(ytestB,pls_pred)#[,1,numberPC])
 boot::corr(d=xy) ^ 2
 rmse(as.vector(unlist(ytestB))-as.vector(unlist(pls_pred)))
+
+# Roy and Trophsa measures
+colnames(xy) <- c("PIC50","Pred")
+tropsha(xy)
+
 plot(xy,col='red',main='Actual vs predicted PLS ',pch=18,cex=0.7)
 abline(0,1,lwd=2)
 legend('bottomright',legend='PLS',pch=18,col='red', bty='n')
@@ -160,6 +193,7 @@ plotres(pls_cv)
 results <- cbind(pls_pred,ytestB,ytestB-pls_pred)
 colnames(results)<-c("PLS","PIC50","Residual")
 head(results)
+write.xlsx(head(xy,20), "mydata.xlsx") 
 
 #########################################################################################
 # -------------- LINEAR REGRESSION (LM) MODEL ---------------------
@@ -173,8 +207,13 @@ lm_pred <- predict(lm_cv$finalModel, testdata[,1:numberPC])
 
 rm(xy)
 xy<-cbind(ytestB,lm_pred)
-boot::corr(d=xy ^ 2)
+boot::corr(d=xy) ^ 2
 rmse(as.vector(unlist(ytestB))-as.vector(unlist(lm_pred)))
+
+# Roy and Trophsa measures
+colnames(xy) <- c("PIC50","Pred")
+tropsha(xy)
+
 plot(xy,col='red',main='Actual vs predicted Linear Regression, (PCA=15 comps) ',pch=18,cex=0.7)
 legend('bottomright',legend='Linear',pch=18,col='red', bty='n')
 plotres(lm_cv$finalModel)
@@ -182,9 +221,11 @@ plotres(lm_cv$finalModel)
 
 results <- cbind(lm_pred,ytestB,ytestB-lm_pred)
 colnames(results)<-c("LinearRegress","PIC50","Residual")
-head(results)
+head(results,20)
 
-#trainingdata[,1:15] <- scale(trainingdata[,1:15])
-#testdata[,1:15] <- scale(testdata[,1:15])
+
+write.xlsx(head(xy,20), "mydata.xlsx") 
+
+
 
 

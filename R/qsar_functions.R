@@ -74,19 +74,25 @@ rmse <- function(error) {
 }
 
 
-
-#
 # As suggested by the reviewers some further measures used in QSAR maybe more appropriate
-# to judge validity of the model as R2, RSME does not always provide a good estimate.
+# to judge validity of the model as R2 and RSME do not always provide a good estimate.
 
 # Roy measure: 
-roy <- function(y, ypred){
-  cat("\nRoy ", sqrt(mean(error^2))) # Roy
+roy <- function(values){
+  r2 <- boot::corr(d=xy) ^ 2
+  cat("\nRoy ", r2) # Roy
   
 }
 
-# Tropsha measure:
-tropsha <- function(y, ypred){
-  cat("\nTropsha ", sqrt(mean(error^2))) # Tropsha-Golbraikh
+
+# Tropsha measure:  # Tropsha-Golbraikh
+tropsha <- function(values){
+  Ytr <- mean(trainingdata$PIC50)  # mean value of the dependent variable using training daa
+  tp <- 1-(sum((values$PIC50 - values$Pred)^2)/sum((values$PIC50 - Ytr)^2))
+  cat("\nTropsha ", tp,"\n")
+  return(tp)
 }
+
+
+
 
