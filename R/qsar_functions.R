@@ -1,76 +1,47 @@
 # qsar_functions.R
 #------------ SOME FUNCTIONS FOR CALCULATING R2 ---------------------   
-rsquare = function(object=NULL, y, fitted.y){
-  # get y and fitted.y from a lm or glm object
-  if (! is.null(object)) {
-    fitted.y = fitted(object)
-    if (class(fitted.y) == "numeric")
-      y = object$model[[1]]
-    else
-      y = object$model[,1]
-  }
-  
-  # compute coefficient of determination
-  if (class(fitted.y) == "numeric") {
-    return(cor(y, fitted.y)^2)
-  } else {
-    R2 = double(ncol(y))
-    for (ic in 1:ncol(y))
-      R2[ic] = cor(y[,ic], fitted.y[,ic])^2
-    return(R2)  }
-}
-
-get_r2_cor <- function(y, y_pred, w) {
-  # Calculate R2 using the correlation coefficient method
-  xy = cbind(y, y_pred)
-  return(boot::corr(d=xy, w=w) ^ 2)
-}
-
-get_r2_ss <- function(y, y_pred, w) {
-  # Calculate R2 using the Sum of Squares method
-  # https://en.wikipedia.org/wiki/Coefficient_of_determination#Definitions
-  ss_residual = sum(w * (y - y_pred) ^ 2)
-  ss_total = sum(w * (y - weighted.mean(y, w)) ^ 2)
-  return(1 - ss_residual / ss_total)
-}
-
-get_r2_likehood <- function(model, model_intercept, n) {
-  # Calculate R2 using the generalized (likelihood) method
-  # https://en.wikipedia.org/wiki/Coefficient_of_determination#Generalized_R2
-  L_0 = exp(as.numeric(logLik(model_intercept)))
-  L_null = exp(as.numeric(logLik(model)))
-  return(1 - (L_0 / L_null) ^ (2 / n))
-}
-
-simulate1 <- function(weighted = T, n = 50, seed = 0) {
-  # Randomly generate data, perform regression, and return the r-squared values
-  # produced by various methods.
-  
-  # Simulate x (the predictor), y (the outcome), and w (the observation weights)
-  set.seed(seed)
-  x = runif(n)
-  y = runif(n)
-  if (weighted) {w = runif(n)} else {w = rep(1, n)}
-  
-  # Fit linear regression models and compute predictions
-  model_intercept = lm(y ~ 1, weight=w)
-  model = lm(y ~ x, weight=w)
-  y_pred = predict(model)
-  
-  # Calculate and return the four R2 measures
-  return(c(
-    r2_cor = get_r2_cor(y, y_pred, w),
-    r2_lm = summary(model)$r.squared,
-    r2_likelihood = get_r2_likehood(model, model_intercept, n),
-    r2_ss = get_r2_ss(y, y_pred, w)
-  ))
-}
-
 
 rmse <- function(error) {
   cat("\n RMSE", sqrt(mean(error^2))) # RMSE
   cat("\n MAE", mean(abs(error))) # MAE
   
+}
+
+
+R2 <- function(x, y) {
+  #res <- caret::postResample(x, y)
+  #rsq <- res[2]
+  
+  avr_y_actual <- mean(ytestB$PIC50)
+  ss_total     <- sum((ytestB$PIC50 - avr_y_actual)^2)
+  ss_regression <- sum((svm_pred - avr_y_actual)^2)
+  ss_residuals <- sum((ytestB$PIC50 - svm_pred)^2)
+  r2 <- 1 - ss_residuals / ss_total
+  
+  return(r2)
+  #1 - sum((ytestB$PIC50-svm_pred)^2)/sum((ytestB$PIC50-mean(ytestB$PIC50))^2)
+}
+
+rto.estimates <- function(x, y) {
+  b1 <- sum(x * y) / sum(x^2)
+  ssr <- b1^2 * sum(x^2)
+  sse <- sum(y^2) - ssr
+  mse <- sse / (length(x) - 1)
+  msr <- ssr / 1
+  res.std.err <- sqrt(mse)
+  f.stat <- msr / mse
+  std.error <- sqrt(mse / sum(x^2))
+  
+  r2 <- ssr / (sse + ssr)
+  
+  adj.r2 <- r2 - (1 - r2) * (2 - 1) / (length(x) - 1)
+  
+  res <- data.frame(rbind(b1, res.std.err, f.stat, std.error, r2, adj.r2))
+  rownames(res) <- c('b1', 'Residual Standard Error', 'F-Statistic', 'b1 Standard Error', 
+                     'r-squared', 'Adjusted r-squared')
+  colnames(res) <- 'Estimates'
+  
+  print(format(res, scientific = FALSE, digits = 3))
 }
 
 
@@ -87,12 +58,20 @@ roy <- function(values){
 
 # Tropsha measure:  # Tropsha-Golbraikh
 tropsha <- function(values){
-  Ytr <- mean(trainingdata$PIC50)  # mean value of the dependent variable using training daa
+  Ytr <- mean(trainingdata$PIC50)  # mean value of the dependent variable using training data
+  Yte <- mean(testdata$PIC50)
   tp <- 1-(sum((values$PIC50 - values$Pred)^2)/sum((values$PIC50 - Ytr)^2))
   cat("\nTropsha ", tp,"\n")
   return(tp)
 }
 
+q2 <- function(values){
+  Ytr <- mean(trainingdata$PIC50)  # mean value of the dependent variable using training data
+  Yte <- mean(testdata$PIC50)
+  tp <- 1-(sum((values$PIC50 - values$Pred)^2)/sum((values$PIC50 - Ytr)^2))
+  cat("\nQ2 ", tp,"\n")
+  return(tp)
+}
 
 
 

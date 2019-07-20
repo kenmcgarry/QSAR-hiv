@@ -11,9 +11,13 @@ library(neuralnet)
 library(e1071)
 library(randomForest)
 library(plotmo)
-library(kernlab)
 library(xlsx)
 library(dplyr)
+library(e1071)
+library(RSNNS)
+library(kerndwd)
+library(kernlab)
+
 
 
 n <- colnames(trainingdata)
@@ -66,7 +70,7 @@ legend('bottomright',legend='NN',pch=18,col='red', bty='n')
 # do the residual plot using plotres()
 plotres(nn_cv,which=1:4)
 
-write.xlsx(head(results,20), "mydata.xlsx") 
+write.xlsx(results, "mydata.xlsx") 
 
 #########################################################################################
 # -------------- RANDOM FOREST (RF) MODEL ---------------------
@@ -106,18 +110,33 @@ write.xlsx(head(results,20), "c:mydata.xlsx")
 # -------------- SUPPORT VECTOR MACHINE (SVM) MODEL ---------------------
 # https://rpubs.com/ezgi/classification
 
-grid_radial <- expand.grid(sigma = c(0.01, 0.05, 0.06, 0.1, 0.5, 0.9),
-                               C = c(0.1, 0.25, 0.5, 0.75, 1.0, 2.0, 5.0, 6, 7, 8, 9, 10))
+n <- colnames(trainingdata)
+formzero <- as.formula(paste("PIC50 ~", paste(n[!n %in% "PIC50"], collapse = " + ")))
+formzero <- paste(formzero, " +0")
 
-svm_cv <- caret::train(form, data = trainingdata, method = "svmRadial",#"svmLinear",
-                    trControl=fitControl,
+fitControl2 <- trainControl( # k-fold CV.
+  method = "repeatedcv",
+  verboseIter = TRUE,
+  repeats=10,
+  number = 10)
+
+fitControl3 <- trainControl(method = "LOOCV",verboseIter = TRUE)
+
+grid_radial <- expand.grid(sigma = c(0.60,0.85,0.1,0.15,0.2,0.3),
+                               C = c(1,2,3,4,5,6))
+
+svm_cv <- caret::train(form, data = trainingdata, method = "svmRadial",#"svmLinear","svmRadial"
+                    trControl=fitControl3,
                     tuneGrid=grid_radial,
-                    preProcess = c("center", "scale"),
-                    #savePred=TRUE,
-                    tuneLength = 10)
+                    metric="Rsquared",
+                    tuneLength = 10,
+                    savePred=TRUE,
+                    preProcess = c("center", "scale"))#,
+                    #tuneLength = 10)
 svm_cv
 #Predict using SVM regression
 svm_pred <- predict(svm_cv, testdata[,1:numberPC])
+
 rm(xy)
 results<-cbind(ytestB,svm_pred)
 head(results,20)
@@ -143,11 +162,27 @@ write.xlsx(head(results,20), "mydata.xlsx")
 #########################################################################################
 # -------------- RADIAL BASIS FUNCTION (RBF) MODEL ---------------------
 cat("\nTraining RBF model")
-rbf_model <- rbf(trainingdata[,1:numberPC], trainingdata[,numberPC+1], size=80, maxit=10000, 
-                 initFuncParams=c(0, 1, 0, 0.01, 0.01), 
-                 learnFuncParams=c(1e-8, 0, 1e-8, 0.1, 0.8), linOut=TRUE)
+fitControlRBF <- trainControl( # k-fold CV.
+  method = "cv",
+  verboseIter = TRUE,
+  number = 5)
 
-rbf_pred <- predict(rbf_model,testdata[,1:numberPC])
+rbf_cv <- caret::train(form, data = trainingdata, 
+      method = 'krlsRadial', 
+      trControl = fitControlRBF,
+      tuneGrid = data.frame(.lambda = NA, 
+                            .sigma  = c(0.0001, 0.001, 0.01, 0.1, 0.5, 1, 2, 5, 10, 20, 50,100,500)),
+      preProc = c("center","scale"))
+
+
+rbf_cv <- caret::train(form, data = trainingdata, 
+                       method = 'gaussprPoly',
+                       trControl = fitControl,
+                       #tuneGrid = data.frame(.sigma  = c(0.0001, 0.001, 0.01, 0.1, 1, 10 ,20)),
+                       preProc = c("center", "scale"))
+
+summary(rbf_cv)
+rbf_pred <- predict(rbf_cv,testdata[,1:numberPC])
 rm(xy)
 xy <- cbind(ytestB,rbf_pred)
 boot::corr(d=xy) ^ 2
@@ -156,14 +191,16 @@ rmse(as.vector(unlist(ytestB))-as.vector(unlist(rbf_pred)))
 colnames(xy) <- c("PIC50","Pred")
 tropsha(xy)
 
-plot(xy,col='red',main='Actual vs predicted RBF, (PCA=15 comps)',pch=18,cex=0.7)
+plot(xy,col='red',main='Actual vs predicted RBF',pch=18,cex=0.7)
 abline(0,1,lwd=2)
 legend('bottomright',legend='RBF',pch=18,col='red', bty='n')
-plotres(rbf_model)
+plotres(rbf_cv)
 
 results <- cbind(rbf_pred,ytestB,ytestB-rbf_pred)
 colnames(results)<-c("RBF","PIC50","Residual")
 head(results)
+
+write.xlsx(xy, "mydata.xlsx")
 
 #########################################################################################
 # -------------- PARTIAL LEAST SQUARES (PLS) MODEL ---------------------
@@ -203,7 +240,7 @@ lm_cv <- caret::train(form, data = trainingdata,
                trControl = fitControl, 
                metric="Rsquared")
 summary(lm_cv)
-lm_pred <- predict(lm_cv$finalModel, testdata[,1:numberPC])
+lm_pred <- predict(lm_cv, testdata[,1:numberPC])
 
 rm(xy)
 xy<-cbind(ytestB,lm_pred)

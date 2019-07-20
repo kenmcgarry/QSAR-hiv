@@ -25,6 +25,7 @@ library(pcaMethods)
 library(xtable)
 library(e1071)
 library(RSNNS)
+library(xlsx)
 
 sdf187 <- read.SDFset("QSAR_187.sdf")    # This is the 187 compounds chosen from literature
 
