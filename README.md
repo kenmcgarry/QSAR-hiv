@@ -5,4 +5,5 @@ Despite the significant progress in managing patients infected with HIV through 
 This project is a collaboration between the University of Sunderland and the University of Newcastle.
 
 If you find the data and R source code useful please cite our paper:
+
 A. Hosny, M. Ashton, Y. Gong and K. McGarry, The development of a predictive model to identify potential HIV-1 attachment inhibitors, Accepted for publication in Computers in Biology and Medicine Journal, 2020.
